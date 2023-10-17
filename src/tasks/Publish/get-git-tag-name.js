@@ -1,3 +1,4 @@
+import execa from 'execa';
 import { normalisePackageNameNpm } from './normalise-package-name';
 
 export default function getGitTagName(pkg, config) {
@@ -10,5 +11,18 @@ export default function getGitTagName(pkg, config) {
  * @param {object} pkg The package.json object.
  */
 export function defaultTagNameFormat(pkg) {
-  return `${normalisePackageNameNpm(pkg.name)}-v${pkg.version}-gitpkg`;
+  let gitSha = undefined;
+  try {
+    const { stdout } = execa.sync("git rev-parse --short HEAD", { encoding: "utf-8" })
+    gitSha = stdout.trim()
+  } catch (error) {
+  }
+
+  let tag = `${normalisePackageNameNpm(pkg.name)}-v${pkg.version}-gitpkg`;
+
+  if (gitSha) {
+    tag = `${tag}-${gitSha}`
+  }
+
+  return tag;
 }
